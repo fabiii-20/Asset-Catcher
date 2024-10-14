@@ -8,4 +8,7 @@ router.post('/download-assets', cdnController.downloadAssets);
 // Route to generate and download Excel
 router.post('/download-excel', cdnController.downloadExcel);
 
+// Endpoint for generating preview data
+router.post('/generate-preview', cdnController.generatePreview);
+
 module.exports = router;

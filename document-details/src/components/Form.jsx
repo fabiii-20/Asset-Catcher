@@ -1,65 +1,68 @@
 import React, { useState } from 'react';
 
 const Form = ({ onSubmit }) => {
-  const [rtIds, setRtIds] = useState([{ id: '', path: '', name: '' }]);
-  const [useSamePath, setUseSamePath] = useState(false);
-  const [commonPath, setCommonPath] = useState('');
+  const [rtIdsInput, setRtIdsInput] = useState(''); // RT IDs input
+  const [manualFileNamesInput, setManualFileNamesInput] = useState(''); // Manual filenames input
+  const [useSamePath, setUseSamePath] = useState(false); // Checkbox state for same path
+  const [commonPath, setCommonPath] = useState(''); // Common path input
 
-  const handleChange = (index, field, value) => {
-    const newRtIds = [...rtIds];
-    newRtIds[index][field] = value;
-    setRtIds(newRtIds);
+  const handleChangeRtIds = (e) => {
+    setRtIdsInput(e.target.value);
   };
 
-  const addRtId = () => {
-    setRtIds([...rtIds, { id: '', path: '', name: '' }]);
+  const handleChangeManualFileNames = (e) => {
+    setManualFileNamesInput(e.target.value);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(rtIds.map(rt => ({
-      ...rt,
-      path: useSamePath ? commonPath : rt.path
-    })));
+    
+    // Split RT IDs and manual filenames by newlines, then trim
+    const rtIds = rtIdsInput.split('\n').map(id => id.trim()).filter(id => id);
+    const fileNames = manualFileNamesInput.split('\n').map(name => name.trim()).filter(name => name);
+    
+    // Ensure the number of filenames matches the number of RT IDs
+    if(fileNames.length > 0){
+    if (rtIds.length !== fileNames.length) {
+      alert('The number of RT IDs must match the number of filenames.');
+      return;
+    }
+  }
+
+    // Construct the rtData array, each RT ID with its corresponding filename and path
+    const rtData = rtIds.map((id, index) => ({
+      id,
+      path: useSamePath ? commonPath : '',
+      manualFileName: fileNames[index] || '' // Corresponding filename for each RT ID
+    }));
+
+    onSubmit(rtData); // Call the onSubmit prop with the rtData array
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      {rtIds.map((rt, index) => (
-        <div key={index}>
-          <input
-            type="text"
-            placeholder="RT ID"
-            value={rt.id}
-            onChange={(e) => handleChange(index, 'id', e.target.value)}
-            required
-          />
-          {!useSamePath && (
-            <input
-              type="text"
-              placeholder="Path"
-              value={rt.path}
-              onChange={(e) => handleChange(index, 'path', e.target.value)}
-              required
-            />
-          )}
-          <input
-            type="text"
-            placeholder="File Name"
-            value={rt.name}
-            onChange={(e) => handleChange(index, 'name', e.target.value)}
-            required
-          />
-        </div>
-      ))}
-      <button type="button" onClick={addRtId}>Add RT ID</button>
+      <textarea
+        placeholder="Enter RT IDs (one per line)"
+        value={rtIdsInput}
+        onChange={handleChangeRtIds}
+        rows={10}
+        required
+      />
+
+      <textarea
+        placeholder="Enter filenames (one per line, must match RT IDs)"
+        value={manualFileNamesInput}
+        onChange={handleChangeManualFileNames}
+        rows={10}
+      />
+
       <div>
         <input
           type="checkbox"
           checked={useSamePath}
           onChange={(e) => setUseSamePath(e.target.checked)}
         />
-        <label>Use the same path for all</label>
+        <label>Give the path for above assets</label>
         {useSamePath && (
           <input
             type="text"
@@ -70,6 +73,7 @@ const Form = ({ onSubmit }) => {
           />
         )}
       </div>
+
       <button type="submit">Submit</button>
     </form>
   );
